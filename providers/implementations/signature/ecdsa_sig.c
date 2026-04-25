@@ -411,7 +411,7 @@ static int ecdsa_sign_message_final(void *vctx, unsigned char *sig,
     size_t *siglen, size_t sigsize)
 {
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
-    unsigned char digest[EVP_MAX_MD_SIZE];
+    unsigned char digest[EVP_MAX_MD_SIZE] = {0};
     unsigned int dlen = 0;
 
     if (!ossl_prov_is_running() || ctx == NULL)

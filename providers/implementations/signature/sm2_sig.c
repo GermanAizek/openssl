@@ -298,7 +298,7 @@ int sm2sig_digest_sign_final(void *vpsm2ctx, unsigned char *sig, size_t *siglen,
     size_t sigsize)
 {
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
-    unsigned char digest[EVP_MAX_MD_SIZE];
+    unsigned char digest[EVP_MAX_MD_SIZE] = {0};
     unsigned int dlen = 0;
 
     if (psm2ctx == NULL || psm2ctx->mdctx == NULL)

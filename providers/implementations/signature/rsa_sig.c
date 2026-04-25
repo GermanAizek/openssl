@@ -856,7 +856,7 @@ static int rsa_sign_message_final(void *vprsactx, unsigned char *sig,
     size_t *siglen, size_t sigsize)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
-    unsigned char digest[EVP_MAX_MD_SIZE];
+    unsigned char digest[EVP_MAX_MD_SIZE] = {0};
     unsigned int dlen = 0;
 
     if (!ossl_prov_is_running() || prsactx == NULL)

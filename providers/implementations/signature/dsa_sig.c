@@ -390,7 +390,7 @@ static int dsa_sign_message_final(void *vpdsactx, unsigned char *sig,
     size_t *siglen, size_t sigsize)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
-    unsigned char digest[EVP_MAX_MD_SIZE];
+    unsigned char digest[EVP_MAX_MD_SIZE] = {0};
     unsigned int dlen = 0;
 
     if (!ossl_prov_is_running() || pdsactx == NULL || pdsactx->mdctx == NULL)

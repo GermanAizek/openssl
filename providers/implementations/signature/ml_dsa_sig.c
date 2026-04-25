@@ -256,7 +256,7 @@ static int ml_dsa_sign_msg_final(void *vctx, unsigned char *sig,
 {
     PROV_ML_DSA_CTX *ctx = (PROV_ML_DSA_CTX *)vctx;
     uint8_t rand_tmp[ML_DSA_ENTROPY_LEN], *rnd = NULL;
-    uint8_t mu[ML_DSA_MU_BYTES];
+    uint8_t mu[ML_DSA_MU_BYTES] = {0};
     int ret = 0;
 
     if (ctx == NULL)

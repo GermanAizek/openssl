@@ -48,7 +48,7 @@ static int slh_sign_internal(SLH_DSA_HASH_CTX *hctx,
     const SLH_DSA_KEY *priv = hctx->key;
     const SLH_DSA_PARAMS *params = priv->params;
     size_t sig_len_expected = params->sig_len;
-    uint8_t m_digest[SLH_MAX_M];
+    uint8_t m_digest[SLH_MAX_M] = {0};
     const uint8_t *md; /* The first md_len bytes of m_digest */
     size_t md_len = MD_LEN(params); /* The size of the digest |md| */
     /* Points to |m_digest| buffer, it is also reused to point to |sig_fors| */

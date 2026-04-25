@@ -49,7 +49,7 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     int alg_nid, ivlen;
     size_t keylen = 0;
     EVP_CIPHER_CTX *ctx = NULL;
-    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned char iv[EVP_MAX_IV_LENGTH] = {0};
     PBE2PARAM *pbe2 = NULL;
 
     if (!cipher) {

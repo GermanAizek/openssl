@@ -56,7 +56,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
     X509_ALGOR *scheme = NULL, *ret = NULL;
     int alg_nid, keylen, ivlen;
     EVP_CIPHER_CTX *ctx = NULL;
-    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned char iv[EVP_MAX_IV_LENGTH] = {0};
     PBE2PARAM *pbe2 = NULL;
 
     alg_nid = EVP_CIPHER_get_type(cipher);

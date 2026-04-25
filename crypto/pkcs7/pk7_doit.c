@@ -309,8 +309,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
         goto err;
 
     if (evp_cipher != NULL) {
-        unsigned char key[EVP_MAX_KEY_LENGTH];
-        unsigned char iv[EVP_MAX_IV_LENGTH];
+        unsigned char key[EVP_MAX_KEY_LENGTH] = {0};
+        unsigned char iv[EVP_MAX_IV_LENGTH] = {0};
         int keylen, ivlen;
         EVP_CIPHER_CTX *ctx;
 

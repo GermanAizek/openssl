@@ -4656,7 +4656,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     const int *mblengths = mblengths_list;
     int j, count, keylen, num = OSSL_NELEM(mblengths_list), ciph_success = 1;
     const char *alg_name;
-    unsigned char *inp = NULL, *out = NULL, *key, no_key[32], no_iv[16];
+    unsigned char *inp = NULL, *out = NULL, *key, no_key[32] = {0}, no_iv[16] = {0};
     EVP_CIPHER_CTX *ctx = NULL;
     double d = 0.0;
 

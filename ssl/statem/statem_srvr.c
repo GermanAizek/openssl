@@ -4268,7 +4268,7 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
     size_t hlen;
     SSL_CTX *tctx = s->session_ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH];
-    unsigned char key_name[TLSEXT_KEYNAME_LENGTH];
+    unsigned char key_name[TLSEXT_KEYNAME_LENGTH] = {0};
     int iv_len;
     CON_FUNC_RETURN ok = CON_FUNC_ERROR;
     size_t macoffset, macendoffset;

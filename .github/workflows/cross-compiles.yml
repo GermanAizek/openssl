@@ -41,8 +41,10 @@ jobs:
       matrix:
         # The platform matrix specifies:
         #   arch: the architecture to build for, this defines the tool-chain
-        #         prefix {arch}- and the Debian compiler package gcc-{arch}
-        #         name.
+        #         prefix {arch}- (unless prefix is overridden) and the Debian
+        #         compiler package gcc-{arch} name (unless compiler is overridden).
+        #   compiler: optional; explicit Debian package name for the compiler.
+        #   prefix:   optional; cross-compiler binary prefix if different from {arch}-.
         #   libs: the Debian package for the necessary link/runtime libraries.
         #   target: the OpenSSL configuration target to use, this is passed
         #           directly to the config command line.
@@ -52,6 +54,9 @@ jobs:
         #          to never run the tests, otherwise its value is passed to
         #          the "make test" command to allow selective disabling of
         #          tests.
+        #   label: optional; custom label used for artifact naming.
+        #   toolchain_url: optional; URL to download a pre-built toolchain archive.
+        #   no_apt: optional; set to true to skip apt compiler installation.
         #   qemucpu: optional; string that describes CPU properties.
         #            The string will be used to set the QEMU_CPU variable.
         #   opensslcapsname: optional; string that describes the postfix of the
@@ -92,6 +97,30 @@ jobs:
             fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
+            # ARM Cortex-M4 (bare-metal, Thumb-2)
+            arch: arm-none-eabi,
+            label: arm-cortex-m4,
+            libs: libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib,
+            target: gcc -mcpu=cortex-m4 -mthumb no-shared no-threads no-dso no-async no-asm,
+            fips: no,
+            tests: none
+          }, {
+            # ARM Cortex-M0+ (bare-metal, Thumb-1)
+            arch: arm-none-eabi,
+            label: arm-cortex-m0plus,
+            libs: libnewlib-arm-none-eabi,
+            target: gcc -mcpu=cortex-m0plus -mthumb no-shared no-threads no-dso no-async no-asm,
+            fips: no,
+            tests: none
+          }, {
+            # ARM Cortex-R5 (bare-metal real-time core)
+            arch: arm-none-eabi,
+            label: arm-cortex-r5,
+            libs: libnewlib-arm-none-eabi,
+            target: gcc -mcpu=cortex-r5 -mthumb no-shared no-threads no-dso no-async no-asm,
+            fips: no,
+            tests: none
+          }, {
             # gcc hppa seems to have some potential compiler issues
             # with -O2 on this platform, reduce optimization to -01
             arch: hppa-linux-gnu,
@@ -99,6 +128,32 @@ jobs:
             target: -static -O1 linux-generic32,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
+          }, {
+            # RISC-V 32-bit Embedded (RV32IMAC bare-metal)
+            arch: riscv64-unknown-elf,
+            label: riscv32-embedded,
+            libs: picolibc-riscv64-unknown-elf libnewlib-riscv64-unknown-elf,
+            target: gcc -march=rv32imac -mabi=ilp32 no-shared no-threads no-dso no-async no-asm,
+            fips: no,
+            tests: none
+          }, {
+            # Xtensa (Tensilica) - ESP32 LX6
+            arch: xtensa-esp32-elf,
+            label: xtensa-esp32,
+            toolchain_url: "https://github.com/espressif/crosstool-NG/releases/download/esp-14.2.0_20241119/xtensa-esp-elf-14.2.0_20241119-x86_64-linux-gnu.tar.xz",
+            no_apt: true,
+            prefix: xtensa-esp-elf-,
+            target: gcc -mlongcalls no-shared no-threads no-dso no-async no-asm,
+            fips: no,
+            tests: none
+          }, {
+            # Microchip PIC32 (MIPS32r2)
+            arch: mipsel-linux-gnu,
+            label: pic32-mips,
+            libs: libc6-dev-mipsel-cross,
+            target: gcc -EL -mips32r2 -msoft-float no-shared no-threads no-dso no-async no-asm,
+            fips: no,
+            tests: none
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
@@ -188,11 +243,19 @@ jobs:
       if: matrix.platform.ppa != ''
       run: |
         sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
+    - name: install custom toolchain
+      if: matrix.platform.toolchain_url != ''
+      run: |
+        sudo mkdir -p /opt/toolchain
+        curl -sSL "${{ matrix.platform.toolchain_url }}" | sudo tar -xJ -C /opt/toolchain --strip-components=1 2>/dev/null || \
+        curl -sSL "${{ matrix.platform.toolchain_url }}" | sudo tar -xz -C /opt/toolchain --strip-components=1
+        echo "/opt/toolchain/bin" >> $GITHUB_PATH
     - name: install packages
+      if: matrix.platform.no_apt != true
       run: |
         sudo apt-get update
         sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
-            gcc-${{ matrix.platform.arch }} \
+            ${{ matrix.platform.compiler || format('gcc-{0}', matrix.platform.arch) }} \
             ${{ matrix.platform.libs }}
     - uses: actions/checkout@v6
       with:
@@ -204,13 +267,13 @@ jobs:
       if: matrix.platform.fips != 'no'
       run: |
         ./config --banner=Configured --strict-warnings enable-fips enable-lms \
-                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                 --cross-compile-prefix=${{ matrix.platform.prefix || format('{0}-', matrix.platform.arch) }} \
                  ${{ matrix.platform.target }}
     - name: config without FIPS
       if: matrix.platform.fips == 'no'
       run: |
         ./config --banner=Configured --strict-warnings enable-lms \
-                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                 --cross-compile-prefix=${{ matrix.platform.prefix || format('{0}-', matrix.platform.arch) }} \
                  ${{ matrix.platform.target }}
     - name: config dump
       run: ./configdata.pm --dump
@@ -258,6 +321,6 @@ jobs:
       if: success() || failure()
       uses: actions/upload-artifact@v5
       with:
-        name: "cross-compiles@${{ matrix.platform.arch }}"
+        name: "cross-compiles@${{ matrix.platform.label || matrix.platform.arch }}"
         path: artifacts.tar.gz
         if-no-files-found: ignore
